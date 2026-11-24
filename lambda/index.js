@@ -58,6 +58,7 @@ function questionHandler({ ask, config }) {
           deadline: Date.now() + ANSWER_BUDGET_MS,
         });
         speech = cleanForSpeech(raw);
+        console.log(`answer "${speech}"`);
         attributes.history = [
           ...history,
           { role: 'user', content: question },
@@ -110,6 +111,16 @@ const SessionEndedRequestHandler = {
   handle: (input) => input.responseBuilder.getResponse(),
 };
 
+// One line per request: which intent Alexa picked and what ended up in the slot.
+const LogRequestInterceptor = {
+  process(input) {
+    const { request } = input.requestEnvelope;
+    const intent = request.intent;
+    const slot = intent ? ` "${intent.slots?.domanda?.value ?? ''}"` : '';
+    console.log(`request ${request.type}${intent ? ` ${intent.name}` : ''}${slot}`);
+  },
+};
+
 const ErrorHandler = {
   canHandle: () => true,
   handle(input, error) {
@@ -135,6 +146,7 @@ function createSkill({ ask = llm.answer, config = loadConfig, skillId } = {}) {
       FallbackIntentHandler,
       SessionEndedRequestHandler,
     )
+    .addRequestInterceptors(LogRequestInterceptor)
     .addErrorHandlers(ErrorHandler)
     .withApiClient(new Alexa.DefaultApiClient())
     .create();
