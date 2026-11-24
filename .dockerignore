@@ -1,0 +1,7 @@
+lambda/node_modules
+lambda/config.js
+lambda/test
+.git
+*.md
+scripts
+skill-package

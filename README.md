@@ -18,9 +18,10 @@ può cercare la canzone su iTunes o la voce su Wikipedia prima di rispondere.
 ## Struttura
 
 ```
-lambda/                 codice della skill (è la cartella che va su Alexa)
+lambda/                 codice della skill
   index.js              handler Alexa
-  llm.js                client Groq/Gemini e ciclo degli strumenti
+  server.js             endpoint HTTPS per il server (Express, verifica la firma di Alexa)
+  llm.js                client Groq/Gemini/OpenRouter e ciclo degli strumenti
   tools.js              ricerca canzoni e Wikipedia
   carriers.js           frasi d'apertura riconosciute (vedi sotto)
   speech.js             pulizia del testo per la voce
@@ -29,6 +30,7 @@ lambda/                 codice della skill (è la cartella che va su Alexa)
 skill-package/          manifest e modello d'interazione it-IT
 scripts/build-model.js  rigenera il modello d'interazione da carriers.js
 scripts/ask.js          fa una domanda da terminale, senza Alexa
+Dockerfile, docker-compose.yml   immagine per il server (garganacl)
 ```
 
 ### Perché tanti intent
@@ -61,20 +63,41 @@ GROQ_API_KEY=gsk_... node scripts/ask.js "chi canta il mondo"
 Oppure copia `lambda/config.example.js` in `lambda/config.js`, mettici le chiavi e
 lancia solo `node scripts/ask.js "..."`.
 
+## Dove gira
+
+La skill gira in Docker sul server Contabo, deployata da
+[garganacl](https://github.com/danielebucchi/garganacl) (app `jarvis` in
+`inventory/group_vars/all/apps.yml`): Caddy espone `https://jarvis.nerdnostalgia.store/`
+con un certificato Let's Encrypt e lo gira al container su `127.0.0.1:4848`.
+
+Le variabili del container arrivano dal vault di garganacl: `GROQ_API_KEY`,
+`GEMINI_API_KEY`, `OPENROUTER_API_KEY` e `ALEXA_SKILL_ID`. Con `ALEXA_SKILL_ID`
+impostato, le richieste di altre skill vengono rifiutate (la firma prova solo che
+la richiesta viene da Alexa, non che è per Jarvis).
+
+```sh
+# deploy della sola Jarvis, dalla cartella di garganacl
+ansible-playbook playbooks/deploy-apps.yml --vault-password-file=.vault_pass -e only_app=jarvis
+```
+
+In locale: `docker compose up --build` e `curl localhost:4848/health`.
+
 ## Installazione su Alexa
 
 1. Vai su <https://developer.amazon.com/alexa/console/ask> con lo stesso account
    Amazon dell'Echo e scegli **Crea skill**.
 2. Nome `Jarvis`, lingua **Italiano (IT)**, tipo **Personalizzato**, hosting
-   **Alexa-hosted (Node.js)**, regione **UE (Irlanda)**, modello **Inizia da zero**.
+   **Fornisci il tuo** (*Provision your own*), modello **Inizia da zero**.
 3. **Build → Modello di interazione → Editor JSON**: incolla il contenuto di
    `skill-package/interactionModels/custom/it-IT.json`, **Salva** e **Crea il modello**.
    Se la console rifiuta il nome d'invocazione di una sola parola, cambialo in
    `ok jarvis` (o simile) in `scripts/build-model.js` e rigenera.
-4. **Codice**: sostituisci `index.js` e `package.json` con quelli di `lambda/`, crea
-   `llm.js`, `tools.js`, `carriers.js`, `speech.js`, `settings.js` copiandoli, e crea
-   `config.js` con le chiavi (come in `config.example.js`). **Salva** e **Distribuisci**.
-5. **Test**: attiva il test in **Sviluppo** e scrivi o di' "chiedi a jarvis chi canta
-   bella ciao". I log sono in **Codice → CloudWatch Logs**.
-6. Sull'Echo (impostato in italiano, stesso account) la skill in sviluppo è già attiva:
+4. **Build → Endpoint**: **HTTPS**, regione predefinita
+   `https://jarvis.nerdnostalgia.store/`, certificato *"My development endpoint has a
+   certificate from a trusted certificate authority"*. **Salva**.
+5. Copia lo **Skill ID** (`amzn1.ask.skill...`) e mettilo in garganacl come
+   `jarvis_alexa_skill_id`, poi rideploya.
+6. **Test**: attiva il test in **Sviluppo** e scrivi o di' "chiedi a jarvis chi canta
+   bella ciao". I log sono quelli del container (`docker compose logs -f` sul server).
+7. Sull'Echo (impostato in italiano, stesso account) la skill in sviluppo è già attiva:
    "Alexa, apri jarvis".

@@ -1,0 +1,9 @@
+# Deploy con garganacl: Caddy fa da reverse proxy su jarvis.nerdnostalgia.store -> 127.0.0.1:4848
+# Le chiavi (GROQ_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY) e ALEXA_SKILL_ID
+# arrivano dal .env che garganacl scrive dal vault.
+services:
+  jarvis:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4848:3000"

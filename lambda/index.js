@@ -121,8 +121,12 @@ const ErrorHandler = {
   },
 };
 
-function createSkill({ ask = llm.answer, config = loadConfig } = {}) {
-  return Alexa.SkillBuilders.custom()
+// skillId: when set, requests from any other skill are rejected. Signature
+// checks only prove a request comes from Alexa, not that it is for Jarvis.
+function createSkill({ ask = llm.answer, config = loadConfig, skillId } = {}) {
+  const builder = Alexa.SkillBuilders.custom();
+  if (skillId) builder.withSkillId(skillId);
+  return builder
     .addRequestHandlers(
       LaunchRequestHandler,
       questionHandler({ ask, config }),
