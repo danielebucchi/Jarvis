@@ -1,0 +1,14 @@
+{
+  "name": "jarvis-alexa-skill",
+  "version": "1.0.0",
+  "description": "Alexa skill that answers questions with a free LLM",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "ask-sdk-core": "^2.14.0",
+    "ask-sdk-model": "^1.86.0"
+  }
+}

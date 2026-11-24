@@ -1,0 +1,4 @@
+node_modules/
+.env
+lambda/config.js
+.DS_Store

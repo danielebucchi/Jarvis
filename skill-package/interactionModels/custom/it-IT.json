@@ -1,0 +1,446 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "jarvis",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "DomandaIntent",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "dimmi {domanda}",
+            "sai dirmi {domanda}",
+            "mi sai dire {domanda}",
+            "voglio sapere {domanda}",
+            "vorrei sapere {domanda}",
+            "cerca {domanda}",
+            "ho una domanda {domanda}",
+            "domanda {domanda}",
+            "rispondi {domanda}"
+          ]
+        },
+        {
+          "name": "Q_chi",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "chi {domanda}"
+          ]
+        },
+        {
+          "name": "Q_chi_e",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "chi è {domanda}"
+          ]
+        },
+        {
+          "name": "Q_chi_era",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "chi era {domanda}"
+          ]
+        },
+        {
+          "name": "Q_chi_canta",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "chi canta {domanda}"
+          ]
+        },
+        {
+          "name": "Q_chi_ha_cantato",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "chi ha cantato {domanda}"
+          ]
+        },
+        {
+          "name": "Q_chi_ha_scritto",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "chi ha scritto {domanda}"
+          ]
+        },
+        {
+          "name": "Q_chi_ha_vinto",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "chi ha vinto {domanda}"
+          ]
+        },
+        {
+          "name": "Q_di_chi_e",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "di chi è {domanda}"
+          ]
+        },
+        {
+          "name": "Q_cosa",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "cosa {domanda}"
+          ]
+        },
+        {
+          "name": "Q_che_cosa",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "che cosa {domanda}"
+          ]
+        },
+        {
+          "name": "Q_cose",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "cos'è {domanda}"
+          ]
+        },
+        {
+          "name": "Q_che_cose",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "che cos'è {domanda}"
+          ]
+        },
+        {
+          "name": "Q_cosa_significa",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "cosa significa {domanda}"
+          ]
+        },
+        {
+          "name": "Q_come",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "come {domanda}"
+          ]
+        },
+        {
+          "name": "Q_quando",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "quando {domanda}"
+          ]
+        },
+        {
+          "name": "Q_dove",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "dove {domanda}"
+          ]
+        },
+        {
+          "name": "Q_perche",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "perché {domanda}"
+          ]
+        },
+        {
+          "name": "Q_quanto",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "quanto {domanda}"
+          ]
+        },
+        {
+          "name": "Q_quanti",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "quanti {domanda}"
+          ]
+        },
+        {
+          "name": "Q_quante",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "quante {domanda}"
+          ]
+        },
+        {
+          "name": "Q_quale",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "quale {domanda}"
+          ]
+        },
+        {
+          "name": "Q_quali",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "quali {domanda}"
+          ]
+        },
+        {
+          "name": "Q_qual_e",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "qual è {domanda}"
+          ]
+        },
+        {
+          "name": "Q_che",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "che {domanda}"
+          ]
+        },
+        {
+          "name": "Q_in_che_anno",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "in che anno {domanda}"
+          ]
+        },
+        {
+          "name": "Q_parlami_di",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "parlami di {domanda}"
+          ]
+        },
+        {
+          "name": "Q_raccontami",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "raccontami {domanda}"
+          ]
+        },
+        {
+          "name": "Q_spiegami",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "spiegami {domanda}"
+          ]
+        },
+        {
+          "name": "Q_traduci",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "traduci {domanda}"
+          ]
+        },
+        {
+          "name": "Q_calcola",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "calcola {domanda}"
+          ]
+        },
+        {
+          "name": "Q_consigliami",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "consigliami {domanda}"
+          ]
+        },
+        {
+          "name": "Q_secondo_te",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "secondo te {domanda}"
+          ]
+        },
+        {
+          "name": "Q_e_vero_che",
+          "slots": [
+            {
+              "name": "domanda",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "è vero che {domanda}"
+          ]
+        }
+      ],
+      "types": []
+    }
+  }
+}
