@@ -42,6 +42,9 @@ const PROVIDERS = [
 ];
 
 const MAX_TOOL_ROUNDS = 2;
+const LAST_ROUND_NOTE =
+  'Non puoi più cercare: rispondi ora alla domanda con quello che hai, in una frase. ' +
+  'Se non lo sai, dillo.';
 // Not worth starting a provider with less time than this left.
 const MIN_ATTEMPT_MS = 1500;
 
@@ -81,14 +84,31 @@ function configuredProviders(config) {
 
 async function complete(provider, messages, withTools, { deadline, fetchImpl }) {
   const body = { model: provider.model, messages, reasoning_effort: 'low' };
-  if (withTools) body.tools = TOOLS;
+  if (withTools) {
+    body.tools = TOOLS;
+  } else {
+    // Without this, gpt-oss sometimes calls a tool anyway (with a made-up
+    // name) and Groq rejects the request; tool_choice "none" does not stop it.
+    body.messages = [...messages, { role: 'user', content: LAST_ROUND_NOTE }];
+  }
 
-  const res = await fetchImpl(`${provider.baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${provider.apiKey}` },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(Math.max(deadline - Date.now(), 1)),
-  });
+  const post = () =>
+    fetchImpl(`${provider.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${provider.apiKey}` },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(Math.max(deadline - Date.now(), 1)),
+    });
+
+  let res = await post();
+  // gpt-oss now and then calls a tool that does not exist ("search_web") and
+  // Groq answers 400 tool_use_failed. It is random, so one retry usually works.
+  if (res.status === 400) {
+    const detail = await res.text();
+    if (!detail.includes('tool_use_failed')) throw new Error(`HTTP 400 ${detail.slice(0, 200)}`);
+    console.warn(`[${provider.name}] made-up tool call, retrying`);
+    res = await post();
+  }
   if (!res.ok) {
     const detail = (await res.text()).slice(0, 200);
     throw new Error(`HTTP ${res.status} ${detail}`);

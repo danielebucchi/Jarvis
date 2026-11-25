@@ -93,3 +93,9 @@ test('web search failures go back to the model as errors', async () => {
   const noKey = JSON.parse(await runTool('cerca_web', '{"query":"x"}', { deadline: Date.now() + 8000 }));
   assert.equal(noKey.errore, 'ricerca web non configurata');
 });
+
+test('no web search is started without time for it', async () => {
+  const ctx = { ...webCtx(async () => assert.fail('no request expected')), deadline: Date.now() + 2000 };
+  const result = JSON.parse(await runTool('cerca_web', '{"query":"x"}', ctx));
+  assert.equal(result.errore, 'tempo esaurito');
+});

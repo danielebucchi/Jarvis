@@ -12,9 +12,13 @@ const TOOL_TIMEOUT_MS = 2500;
 // moves to the large one when that is used up.
 const WEB_SEARCH_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const WEB_SEARCH_MODELS = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
-// The web search writes the final answer itself (see FINAL_TOOLS), so it can
-// use almost all the time left: no model call comes after it.
-const WEB_RESERVE_MS = 300;
+// A search usually takes 2-3 seconds but can go past 6 on a garbled question.
+// When it succeeds its text is the answer (see FINAL_TOOLS); when it fails or
+// times out, the model still needs a moment to say it does not know.
+const WEB_TIMEOUT_MS = 4500;
+const WEB_RESERVE_MS = 1200;
+// With less time than this a search would rarely finish: skip it.
+const WEB_MIN_MS = 2500;
 // Time kept back for the model to turn the tool result into an answer.
 const ANSWER_RESERVE_MS = 1500;
 const USER_AGENT = 'JarvisAlexaSkill/1.0 (personal Alexa skill)';
@@ -172,8 +176,8 @@ async function searchWeb({ query }, { deadline, fetchImpl, config = {}, now = ne
 
   let lastError;
   for (const model of WEB_SEARCH_MODELS) {
-    const timeout = deadline - Date.now() - WEB_RESERVE_MS;
-    if (timeout <= 0) throw lastError || new Error('tempo esaurito');
+    const timeout = Math.min(WEB_TIMEOUT_MS, deadline - Date.now() - WEB_RESERVE_MS);
+    if (timeout < WEB_MIN_MS) throw lastError || new Error('tempo esaurito');
     const res = await fetchImpl(WEB_SEARCH_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${config.groqApiKey}` },

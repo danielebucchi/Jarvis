@@ -138,6 +138,8 @@ test('tools stop being offered after two rounds', async () => {
   assert.ok(calls[0].body.tools);
   assert.ok(calls[2].body.tools);
   assert.equal(calls[4].body.tools, undefined);
+  assert.match(calls[4].body.messages.at(-1).content, /Non puoi più cercare/);
+  assert.equal(calls[2].body.messages.at(-1).role, 'tool', 'the note is only added on the last round');
 });
 
 test('history is sent before the question', async () => {
@@ -174,4 +176,20 @@ test('a failed web search goes back to the model', async () => {
   ]);
   assert.equal(await answer('x', { config, fetchImpl }), 'Non lo so.');
   assert.equal(JSON.parse(calls[2].body.messages.at(-1).content).errore, 'nessun risultato');
+});
+
+test('a made-up tool call rejected by Groq is retried once', async () => {
+  const rejected = () =>
+    json({ error: { message: "attempted to call tool 'search_web'", code: 'tool_use_failed' } }, 400);
+  const { fetchImpl, calls } = scriptedFetch([rejected(), reply({ content: 'Vasco Rossi.' })]);
+  assert.equal(await answer('chi canta albachiara', { config, fetchImpl }), 'Vasco Rossi.');
+  assert.equal(calls.length, 2);
+  assert.match(calls[1].url, /api\.groq\.com/);
+  assert.equal(calls[1].body.model, 'openai/gpt-oss-120b', 'same provider, not the fallback');
+});
+
+test('other 400 errors move on to the next provider', async () => {
+  const { fetchImpl, calls } = scriptedFetch([json({ error: { message: 'bad' } }, 400), reply({ content: 'Ok.' })]);
+  assert.equal(await answer('x', { config, fetchImpl }), 'Ok.');
+  assert.equal(calls[1].body.model, 'openai/gpt-oss-20b');
 });
