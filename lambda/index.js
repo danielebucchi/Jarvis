@@ -6,8 +6,8 @@ const { isQuestionIntent, questionFromIntent } = require('./carriers');
 const { cleanForSpeech, escapeSsml } = require('./speech');
 const { loadConfig } = require('./settings');
 
-// Alexa drops the request after 8 seconds; keep a margin for the Lambda itself.
-const ANSWER_BUDGET_MS = 6500;
+// Alexa drops the request after 8 seconds; keep a margin for the network.
+const ANSWER_BUDGET_MS = 7000;
 // Say "un attimo" only when the answer is slow to come.
 const PROGRESSIVE_AFTER_MS = 1500;
 const HISTORY_MESSAGES = 6;

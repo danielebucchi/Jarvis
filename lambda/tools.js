@@ -1,9 +1,20 @@
 'use strict';
 
-// Free lookups the model can call. Neither the Groq nor the Gemini free tier
-// comes with web search, and without it the model makes up song credits.
+// Lookups the model can call: without them it makes up song credits and knows
+// nothing after its training cutoff.
+
+const { todayInRome } = require('./dates');
 
 const TOOL_TIMEOUT_MS = 2500;
+// Groq's built-in browser_search, which works on the free tier. A search costs
+// 3000-6000 tokens against an 8000 tokens/minute quota per model, so it runs
+// on the small model first (its quota is separate from the one answering) and
+// moves to the large one when that is used up.
+const WEB_SEARCH_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const WEB_SEARCH_MODELS = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
+// The web search writes the final answer itself (see FINAL_TOOLS), so it can
+// use almost all the time left: no model call comes after it.
+const WEB_RESERVE_MS = 300;
 // Time kept back for the model to turn the tool result into an answer.
 const ANSWER_RESERVE_MS = 1500;
 const USER_AGENT = 'JarvisAlexaSkill/1.0 (personal Alexa skill)';
@@ -43,6 +54,23 @@ const TOOLS = [
         type: 'object',
         properties: {
           query: { type: 'string', description: 'Cosa cercare, in poche parole' },
+        },
+        required: ['query'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'cerca_web',
+      description:
+        'Cerca sul web e restituisce un breve riassunto aggiornato. Da usare per ciò che cambia ' +
+        'nel tempo: partite e risultati, notizie, meteo, orari, date di feste e ricorrenze, prezzi. ' +
+        'È lenta: non usarla per fatti stabili che trovi su Wikipedia.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Cosa cercare, in poche parole, con nomi e date' },
         },
         required: ['query'],
       },
@@ -128,7 +156,44 @@ async function searchWikipedia({ query }, ctx) {
   };
 }
 
-const HANDLERS = { cerca_canzone: searchSong, cerca_wikipedia: searchWikipedia };
+async function searchWeb({ query }, { deadline, fetchImpl, config = {}, now = new Date(), question }) {
+  if (!config.groqApiKey) throw new Error('ricerca web non configurata');
+  const messages = [
+    {
+      role: 'system',
+      content:
+        `Oggi è ${todayInRome(now)}. Cerca sul web e rispondi alla domanda in italiano con una sola ` +
+        'frase breve, che verrà letta ad alta voce: soggetto e risposta, con date e nomi precisi, ' +
+        'senza markdown, link o fonti. Se la domanda non nomina un paese, intendi l\'Italia. ' +
+        'Se non trovi la risposta, dillo in una frase.',
+    },
+    { role: 'user', content: question ? `${question}\n(cerca: ${query})` : query },
+  ];
+
+  let lastError;
+  for (const model of WEB_SEARCH_MODELS) {
+    const timeout = deadline - Date.now() - WEB_RESERVE_MS;
+    if (timeout <= 0) throw lastError || new Error('tempo esaurito');
+    const res = await fetchImpl(WEB_SEARCH_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${config.groqApiKey}` },
+      body: JSON.stringify({ model, messages, reasoning_effort: 'low', tools: [{ type: 'browser_search' }] }),
+      signal: AbortSignal.timeout(timeout),
+    });
+    if (res.status === 429) {
+      lastError = new Error('limite di ricerche raggiunto, riprova tra un minuto');
+      continue;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = (await res.json()).choices?.[0]?.message?.content?.trim();
+    // It sometimes searches and then writes nothing.
+    if (!text) throw new Error('nessun risultato');
+    return { risultato: text };
+  }
+  throw lastError;
+}
+
+const HANDLERS = { cerca_canzone: searchSong, cerca_wikipedia: searchWikipedia, cerca_web: searchWeb };
 
 // Always returns a string for the tool message: failures go back to the model
 // as an error so that it can still answer from what it knows.
@@ -144,4 +209,7 @@ async function runTool(name, rawArgs, ctx) {
   }
 }
 
-module.exports = { TOOLS, runTool, relevantText };
+// Tools whose result is already the answer to read out.
+const FINAL_TOOLS = new Set(['cerca_web']);
+
+module.exports = { TOOLS, FINAL_TOOLS, runTool, relevantText };

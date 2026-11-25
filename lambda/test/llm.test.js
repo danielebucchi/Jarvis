@@ -150,3 +150,28 @@ test('history is sent before the question', async () => {
   const roles = calls[0].body.messages.map((m) => m.role);
   assert.deepEqual(roles, ['system', 'user', 'assistant', 'user']);
 });
+
+test('a web search result is the answer, with no further model call', async () => {
+  const { fetchImpl, calls } = scriptedFetch([
+    reply({
+      tool_calls: [{ id: 'w', type: 'function', function: { name: 'cerca_web', arguments: '{"query":"inter"}' } }],
+    }),
+    reply({ content: "L'Inter gioca stasera contro lo Stoccarda." }),
+  ]);
+  const text = await answer("quando gioca l'inter", { config, fetchImpl });
+  assert.equal(text, "L'Inter gioca stasera contro lo Stoccarda.");
+  assert.equal(calls.length, 2);
+  assert.match(calls[1].body.messages[1].content, /^quando gioca l'inter\n\(cerca: inter\)$/);
+});
+
+test('a failed web search goes back to the model', async () => {
+  const { fetchImpl, calls } = scriptedFetch([
+    reply({
+      tool_calls: [{ id: 'w', type: 'function', function: { name: 'cerca_web', arguments: '{"query":"x"}' } }],
+    }),
+    json({ choices: [{ message: { content: '' } }] }),
+    reply({ content: 'Non lo so.' }),
+  ]);
+  assert.equal(await answer('x', { config, fetchImpl }), 'Non lo so.');
+  assert.equal(JSON.parse(calls[2].body.messages.at(-1).content).errore, 'nessun risultato');
+});

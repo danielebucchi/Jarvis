@@ -1,6 +1,7 @@
 'use strict';
 
-const { TOOLS, runTool } = require('./tools');
+const { TOOLS, FINAL_TOOLS, runTool } = require('./tools');
+const { todayInRome } = require('./dates');
 
 // All providers speak the OpenAI chat completions protocol, so one client
 // covers them. Groq goes first because it is by far the fastest, and Alexa
@@ -45,13 +46,6 @@ const MAX_TOOL_ROUNDS = 2;
 const MIN_ATTEMPT_MS = 1500;
 
 function systemPrompt(now) {
-  const today = now.toLocaleDateString('it-IT', {
-    timeZone: 'Europe/Rome',
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
   return [
     'Sei Jarvis, un assistente vocale che risponde in italiano attraverso Alexa.',
     'La risposta viene letta ad alta voce e deve capirsi al primo ascolto: una sola frase, ' +
@@ -66,8 +60,13 @@ function systemPrompt(now) {
       'soprattutto titoli e nomi stranieri: interpreta la richiesta più probabile.',
     'Per domande su una canzone (chi la canta, album, anno) usa sempre cerca_canzone. ' +
       'Per fatti, persone, luoghi ed eventi usa cerca_wikipedia quando non sei sicuro.',
+    'Per tutto ciò che cambia nel tempo o dipende dalla data di oggi (partite, risultati, notizie, ' +
+      'meteo, orari, prezzi) e per le date di feste e ricorrenze usa sempre cerca_web, non Wikipedia. ' +
+      'È lenta: per i fatti stabili non usarla.',
+    'Se la domanda non nomina un paese, intendi l\'Italia.',
+    'Non rispondere mai con una data o un fatto che non hai letto nei risultati o di cui non sei certo.',
     'Se anche dopo la ricerca non conosci la risposta, dillo in una frase senza inventare.',
-    `Oggi è ${today}.`,
+    `Oggi è ${todayInRome(now)}.`,
   ].join('\n');
 }
 
@@ -120,6 +119,10 @@ async function converse(provider, initialMessages, ctx) {
     for (const call of calls) {
       console.log(`[${provider.name}] ${call.function.name} ${call.function.arguments}`);
       const content = await runTool(call.function.name, call.function.arguments, ctx);
+      // A web search already answers in Jarvis' style: one more model call
+      // would not fit in Alexa's 8 seconds.
+      const final = FINAL_TOOLS.has(call.function.name) && JSON.parse(content).risultato;
+      if (final) return final;
       messages.push({ role: 'tool', tool_call_id: call.id, content });
     }
   }
@@ -128,14 +131,14 @@ async function converse(provider, initialMessages, ctx) {
 // history: previous turns as [{ role: 'user' | 'assistant', content }].
 async function answer(
   question,
-  { history = [], config = {}, deadline = Date.now() + 6500, fetchImpl = fetch, now = new Date() } = {},
+  { history = [], config = {}, deadline = Date.now() + 7000, fetchImpl = fetch, now = new Date() } = {},
 ) {
   const messages = [
     { role: 'system', content: systemPrompt(now) },
     ...history,
     { role: 'user', content: question },
   ];
-  const ctx = { deadline, fetchImpl };
+  const ctx = { deadline, fetchImpl, config, now, question };
   const errors = [];
 
   for (const provider of configuredProviders(config)) {
